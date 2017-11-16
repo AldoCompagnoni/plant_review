@@ -1,6 +1,8 @@
 # create file with response variables (lambda) for plant_review species
 setwd("C:/cloud/MEGA/Projects/sApropos")
 options( stringsAsFactors = F )
+library(readxl)
+library(tidyverse)
 
 # read 
 all_demog <- read.csv("all_demog_6tr.csv")
@@ -10,7 +12,7 @@ pr_spp     <- c("Poa_secunda", "Hesperostipa_comata",
                 "Artemisia_tripartita", "Pseudoroegneria_spicata",
                 "Helianthemum_juliae", "Purshia_subintegra",
                 "Astragalus_cremnophylax_var._cremnophylax",
-                "Opuntia_imbricata", 
+                "Opuntia_imbricata", "Daphne_rodriguezii",
                 "Brassica_insularis", "Cryptantha_flava_2")
 
 # species whose demographic information need be updated
@@ -51,6 +53,7 @@ for(ii in 1:length(fact_id) ){
 
 # read Cryptantha data
 crfl_raw  <- read.csv("results/compadre_updated_files/Cryptantha_flava_2.csv") %>%
+                subset( MatrixTreatment == "Unmanipulated") %>%
                 rename( Lat = LatNS,
                         Lon = LonWE) %>%
                 mutate( Lat = 40.50000000,  
@@ -87,6 +90,31 @@ crfl_lam_r  <- Reduce(function(...) rbind(...), crfl_lam_l)
 # select relevant variables
 sel_crfl    <- intersect(names(compadre$metadata), names(crfl_lam_r) )
 crfl        <- dplyr::select(crfl_lam_r, sel_crfl, lambda)
+
+
+# Daphne_rodriguezii -----------------------------------------------------------------------------
+
+# read Daphne_rodriguezii data
+daro_raw  <- read.csv("results/compadre_updated_files/Daphne_rodriguezii.csv") %>%
+                subset( MatrixComposite != "Mean")
+daro_sel  <- dplyr::select(daro_raw, MatrixPopulation, MatrixEndYear) %>% unique
+daro_des  <- dplyr::select(daro_raw, SpeciesAuthor:MatrixPopulation) %>% 
+                unique %>%
+                mutate( lambda = NA)
+
+for(ii in c(1,2,4:nrow(daro_des)) ){
+  
+  la <- subset(daro_raw, MatrixPopulation == daro_des$MatrixPopulation[ii] &
+                         MatrixEndYear == daro_des$MatrixEndYear[ii] ) %>%
+          dplyr::select(A1:A5) %>%
+          eigen %>%
+          .$values %>%
+          .[1] %>%
+          Re
+  daro_des$lambda[ii] = la
+  
+}
+daro <- daro_des[-3,]
 
 
 # Species formatted by Aldo ----------------------------------------------------------------------
@@ -140,7 +168,7 @@ lam_aldo_spp_df <- Reduce(function(...) rbind(...), lam_aldo_spp_l)
 # put it all together -------------------------------------------------------------- 
 
 # new species for plant review 
-new_lambdas <- Reduce(function(...) bind_rows(...), list(lam_aldo_spp_df, ascrcr, crfl) )
+new_lambdas <- Reduce(function(...) bind_rows(...), list(lam_aldo_spp_df, ascrcr, crfl, daro) )
 new_lambdas <- new_lambdas %>% mutate( log_lambda = log(lambda) )
 
 # add species already in all_demog object
