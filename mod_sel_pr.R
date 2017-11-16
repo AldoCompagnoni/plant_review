@@ -15,7 +15,7 @@ options( mc.cores = parallel::detectCores() )
 
 # climate predictor, response, months back, max. number of knots
 response  <- "log_lambda"
-clim_var  <- "airt"
+clim_var  <- "precip"
 m_back    <- 24    
 st_dev    <- FALSE
 
@@ -24,22 +24,16 @@ lambdas   <- read.csv("data_plant_review/pr_lambdas.csv", stringsAsFactors = F)
 clim      <- data.table::fread(paste0("data_plant_review/",clim_var,"_fc_11.10.17.csv"),  stringsAsFactors = F)
 spp       <- lambdas$SpeciesAuthor %>% unique
 
-
-for(ii in 5:10){
+for(ii in 7:7){
   
   # format data --------------------------------------------------------------------------------------
   
   # set up model "family" based on response
-  if( response == "surv" | response == "grow" )             family = "beta" 
-  if( response == "fec" )                                   family = "gamma"
-  if( grepl("PreRep", response) | grepl("Rep", response) )  family = "beta"
-  if( response == "rho" | response == "react_fsa" )         family = "gamma"
   if( response == "log_lambda")                             family = "normal"
   
   expp_beta     <- 20
   
   # set species (I pick Sphaeraclea_coccinea)
-  ii            <- 1
   spp_name      <- spp[ii]
   
   # lambda data
@@ -490,7 +484,7 @@ for(ii in 5:10){
   
   # mean squared error
   mse <- cxval_pred %>% 
-            dplyr::select(gaus_pred:ctrl2_pred) %>%
+            dplyr::select(gaus_pred:yr_t1_pred) %>%
             lapply(pred_perform, mod_data, response, "mse") %>%
             perform_format("mse") %>%
             mutate( model = gsub("_pred","",model) )
@@ -504,7 +498,7 @@ for(ii in 5:10){
   
   # Expected Log Predictive Density
   elpd <- cxval_pred %>% 
-            dplyr::select(gaus_elpd:ctrl2_elpd) %>%
+            dplyr::select(gaus_elpd:yr_t1_elpd) %>%
             apply(2, sum) %>% 
             as.matrix %>% 
             as.data.frame %>%
@@ -521,8 +515,8 @@ for(ii in 5:10){
                       list(mod_pars_diag, loo_df, waic_df, mof) ) %>%
                       arrange( mse )
   
-  write.csv(mod_summs,  paste0("results_plant_review/mod_summaries_",spp_name,".csv"), row.names = F)
-  write.csv(posteriors, paste0("results_plant_review/posterior_",spp_name,".csv"), row.names = F)
-  write.csv(cxval_pred, paste0("results_plant_review/crossval_pred_diag_",spp_name,".csv"), row.names = F)
+  write.csv(mod_summs,  paste0("results_plant_review/", clim_var, "/", spp_name, "_mod_summaries.csv"),      row.names = F)
+  write.csv(posteriors, paste0("results_plant_review/", clim_var, "/", spp_name, "_posterior.csv"),          row.names = F)
+  write.csv(cxval_pred, paste0("results_plant_review/", clim_var, "/", spp_name, "_crossval_pred_diag.csv"), row.names = F)
 
 }
