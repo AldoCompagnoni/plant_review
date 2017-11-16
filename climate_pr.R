@@ -10,7 +10,7 @@ pr_spp <- c("Poa_secunda", "Hesperostipa_comata",
             "Helianthemum_juliae", "Purshia_subintegra",
             "Astragalus_cremnophylax_var._cremnophylax",
             "Opuntia_imbricata", 
-            "Brassica_insularis", "Cryptantha_flava")
+            "Brassica_insularis", "Cryptantha_flava_2")
   
 future_spp <- "Dracocephalum_austriacum"
 
